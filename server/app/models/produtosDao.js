@@ -4,13 +4,12 @@ const collection = client.db(db).collection('produtos')
 
 //Retorna produtos ordenados de acordo com o campo definido em orderBy
 //e ordenados na ordem definida por reverse, se verdadeiro ordem reversa (ASC)
-const getAllProdutos = async (orderBy='id_prod', reverse = false) => {
+const getAllProdutos = async (orderBy, reverse = false) => {
     try {
-        console.log('getAllProdutos')
         let resultados = []
-
-        //implementar aqui
-        
+        resultados = await collection.find({},{
+            sort: {[orderBy]: reverse ? -1:1},
+        }).toArray()
         return resultados;
     } catch (error) {
         console.log(error)
@@ -22,9 +21,7 @@ const getAllProdutos = async (orderBy='id_prod', reverse = false) => {
 const getProdutoById = async (id_prod) => {
     try {
         let produto = {}
-        
-        //implementar aqui
-        
+        produto = await collection.find({id_prod: parseInt(id_prod)}).toArray()
         return produto;
     } catch (error) {
         console.log(error)
@@ -38,8 +35,7 @@ const getProdutoById = async (id_prod) => {
 const insertProduto = async (produto) => {
     try {
         console.log(produto)
-        //implementar aqui
-        
+        collection.insertOne(produto);        
         return true 
     } catch (error) {
         console.log(error)
@@ -52,10 +48,9 @@ const insertProduto = async (produto) => {
 //API - Testar com cliente HTTP
 const updateProduto = async (new_produto) => {
     try {
-        
-        //implementar aqui
-        
-        let updated
+        let update = {$set: new_produto}
+        let query = {id_prod: parseInt(new_produto.id_prod)}
+        let updated = await collection.updateOne(query, update)
         if (updated) return true
         else throw new Error('DAO: Erro ao atualizar produto!')
     } catch (error) {
@@ -68,10 +63,8 @@ const updateProduto = async (new_produto) => {
 //API - Testar com cliente HTTP
 const deleteProduto = async (id_prod) => {
     try {
-       
-        //implementar aqui
-        
-        return deleted //boolean
+        let deleted = await collection.deleteOne({id_prod: parseInt(id_prod)})
+        return deleted
     } catch (error) {
         console.log(error)
         return false;
@@ -81,9 +74,7 @@ const deleteProduto = async (id_prod) => {
 //API - Testar com cliente HTTP
 const deleteManyProdutos = async (ids) => {
     try {
-        
-        //implementar aqui
-        
+        let deltedAll = collection.deleteMany({id_prod: {$in: ids}})
         return deltedAll //boolean
     } catch (error) {
         console.log(error)
@@ -96,9 +87,13 @@ const getFiltredProdutos = async (field = 'nome', term = '') => {
         let resultados=[]
         console.log({ field, term })
         await changeIndexes(field) //troca de indices
-  
-        //implementar aqui
-        
+
+        resultados = await collection.find({
+            $text: {
+                $search: term
+            }
+        }).toArray()
+
         return resultados;
     } catch (error) {
         console.log(error)
@@ -110,8 +105,14 @@ const getProdutosPriceRange = async (greater = 0, less = 0, sort = 1) => {
     try {
         let resultados = []
         
-        //implementar aqui
+        resultados = await collection.find({
+            preco:{$gt:greater, $lt:less}
+        },{
+            sort:{preco:sort}
+        }).toArray()
         
+        console.log(resultados);
+
         return resultados;
     } catch (error) {
         console.log(error)
